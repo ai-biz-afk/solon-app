@@ -336,7 +336,11 @@ function renderMsgs() {
     const lastUserIndex = [...msgs].map((m,i) => m.role === 'user' ? i : -1).filter(i => i >= 0).pop();
     if (lastUserIndex !== undefined) {
         const el = document.getElementById('msg-' + lastUserIndex);
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (el) {
+            setTimeout(() => {
+                area.scrollTop = el.offsetTop - 8;
+            }, 50);
+        }
     }
 }
  
