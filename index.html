@@ -404,11 +404,15 @@ function esc(t) { const d = document.createElement("div"); d.textContent = t; re
 // マークダウン記号を除去して読みやすくする
 function formatText(t) {
     return esc(t)
-        .replace(/#{1,6}\s?/g, '')           // ## などを削除
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // **太字** を<strong>に
-        .replace(/\*(.*?)\*/g, '$1')          // *斜体* を削除
-        .replace(/`(.*?)`/g, '$1')            // `コード` を削除
-        .replace(/\n/g, '<br>');              // 改行を<br>に
+        .replace(/#{1,6}\s?/g, '')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '$1')
+        .replace(/`(.*?)`/g, '$1')
+        .replace(/：<br>/g, '<br>')
+        .replace(/：$/g, '')
+        .replace(/:<br>/g, '<br>')
+        .replace(/:$/g, '')
+        .replace(/\n/g, '<br>');
 }
  
 renderMsgs();
