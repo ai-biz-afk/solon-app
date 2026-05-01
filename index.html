@@ -328,7 +328,7 @@ function renderMsgs() {
     }
     area.innerHTML = msgs.map(m => {
         if (m.role === "user") return `<div style="display:flex;justify-content:flex-end;margin-bottom:12px;"><div style="background:#4F46E5;color:white;padding:10px 14px;border-radius:18px 18px 4px 18px;max-width:80%;font-size:14px;line-height:1.6;">${esc(m.text)}</div></div>`;
-        if (m.role === "assistant") return `<div style="display:flex;margin-bottom:12px;gap:8px;"><div style="width:32px;height:32px;background:#4F46E5;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:700;flex-shrink:0;">社</div><div style="background:white;border:1px solid #E5E7EB;padding:10px 14px;border-radius:18px 18px 18px 4px;max-width:80%;font-size:14px;line-height:1.8;white-space:pre-wrap;word-wrap:break-word;">${esc(m.text)}</div></div>`;
+        if (m.role === "assistant") return `<div style="display:flex;margin-bottom:12px;gap:8px;"><div style="width:32px;height:32px;background:#4F46E5;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:700;flex-shrink:0;">社</div><div style="background:white;border:1px solid #E5E7EB;padding:10px 14px;border-radius:18px 18px 18px 4px;max-width:80%;font-size:14px;line-height:1.8;word-wrap:break-word;">${formatText(m.text)}</div></div>`;
         return `<div style="text-align:center;color:#EF4444;font-size:12px;margin:8px 0;">${esc(m.text)}</div>`;
     }).join("");
     area.scrollTop = area.scrollHeight;
@@ -373,7 +373,7 @@ async function send() {
             body: JSON.stringify({
                 model: "claude-sonnet-4-20250514",
                 max_tokens: 800,
-                system: `あなたは株式会社ソロンの社長・平川浩美です。以下の経営計画書に基づいて、社員の質問に正確に答えてください。数字は必ず正確に伝えてください。会話の流れを踏まえて自然に対話してください。\n\n${relevantData}`,
+                system: `あなたは株式会社ソロンの社長・平川浩美です。以下の経営計画書に基づいて、社員の質問に正確に答えてください。数字は必ず正確に伝えてください。会話の流れを踏まえて自然に対話してください。回答には#や*などのマークダウン記号は一切使わないでください。箇条書きは「・」を使ってください。\n\n${relevantData}`,
                 messages: recentConv
             })
         });
@@ -400,6 +400,16 @@ function reset() {
 }
  
 function esc(t) { const d = document.createElement("div"); d.textContent = t; return d.innerHTML; }
+ 
+// マークダウン記号を除去して読みやすくする
+function formatText(t) {
+    return esc(t)
+        .replace(/#{1,6}\s?/g, '')           // ## などを削除
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // **太字** を<strong>に
+        .replace(/\*(.*?)\*/g, '$1')          // *斜体* を削除
+        .replace(/`(.*?)`/g, '$1')            // `コード` を削除
+        .replace(/\n/g, '<br>');              // 改行を<br>に
+}
  
 renderMsgs();
 </script>
