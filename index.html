@@ -353,11 +353,8 @@ async function send() {
     conv.push({ role: "user", content: q });
     renderMsgs();
  
-    // 質問の位置にスクロール
-    setTimeout(() => {
-        const userEl = document.getElementById('msg-' + (msgs.length - 1));
-        if (userEl) area.scrollTop = userEl.offsetTop - 8;
-    }, 30);
+    // 質問送信時は一番下にスクロール
+    setTimeout(() => { area.scrollTop = area.scrollHeight; }, 30);
  
     const btn = document.getElementById("sendBtn");
     btn.disabled = true;
@@ -399,12 +396,6 @@ ${relevantData}`,
         conv.push({ role: "assistant", content: answer });
         msgs.push({ role: "assistant", text: answer });
         renderMsgs();
- 
-        // 回答の先頭にスクロール
-        setTimeout(() => {
-            const assistantEl = document.getElementById('msg-' + (msgs.length - 1));
-            if (assistantEl) area.scrollTop = assistantEl.offsetTop - 8;
-        }, 30);
  
     } catch(e) {
         msgs.push({ role: "error", text: "エラー: " + e.message });
