@@ -331,17 +331,6 @@ function renderMsgs() {
         if (m.role === "assistant") return `<div id="msg-${i}" style="display:flex;margin-bottom:12px;gap:8px;"><div style="width:32px;height:32px;background:#4F46E5;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:700;flex-shrink:0;">社</div><div style="background:white;border:1px solid #E5E7EB;padding:10px 14px;border-radius:18px 18px 18px 4px;max-width:80%;font-size:14px;line-height:1.8;word-wrap:break-word;">${formatText(m.text)}</div></div>`;
         return `<div id="msg-${i}" style="text-align:center;color:#EF4444;font-size:12px;margin:8px 0;">${esc(m.text)}</div>`;
     }).join("");
- 
-    // 最新の質問（user）の位置にスクロール
-    const lastUserIndex = [...msgs].map((m,i) => m.role === 'user' ? i : -1).filter(i => i >= 0).pop();
-    if (lastUserIndex !== undefined) {
-        const el = document.getElementById('msg-' + lastUserIndex);
-        if (el) {
-            setTimeout(() => {
-                area.scrollTop = el.offsetTop - 8;
-            }, 50);
-        }
-    }
 }
  
 async function send() {
@@ -363,6 +352,12 @@ async function send() {
     msgs.push({ role: "user", text: q });
     conv.push({ role: "user", content: q });
     renderMsgs();
+ 
+    // 質問の位置にスクロール
+    setTimeout(() => {
+        const userEl = document.getElementById('msg-' + (msgs.length - 1));
+        if (userEl) area.scrollTop = userEl.offsetTop - 8;
+    }, 30);
  
     const btn = document.getElementById("sendBtn");
     btn.disabled = true;
@@ -395,6 +390,12 @@ async function send() {
         conv.push({ role: "assistant", content: answer });
         msgs.push({ role: "assistant", text: answer });
         renderMsgs();
+ 
+        // 回答の先頭にスクロール
+        setTimeout(() => {
+            const assistantEl = document.getElementById('msg-' + (msgs.length - 1));
+            if (assistantEl) area.scrollTop = assistantEl.offsetTop - 8;
+        }, 30);
  
     } catch(e) {
         msgs.push({ role: "error", text: "エラー: " + e.message });
