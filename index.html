@@ -133,49 +133,38 @@
     function getRelevantChunk(question) {
         if (!docText) return '';
 
-        const keywords = {
-            手当: ['手当', '給与', '給料', '資格', '宅建', '取引士', '電気工事', '測量士', '石綿', 'kintone', '通勤', '子供', '一人暮らし', '紹介料', '勤続', '奨学金', '管理職'],
-            賞与: ['賞与', 'ボーナス', '評価', '成長支援', '号棒', '昇給'],
-            採用: ['採用', '新卒', '中途', 'パート', '契約社員', '面接', '育成', '研修'],
-            休暇: ['休暇', '休み', '有給', 'リフレッシュ', '結婚', '出産', '忌引', '退職', '直行', '直帰', '遅刻', '欠勤', '残業'],
-            クレーム: ['クレーム', '苦情', 'トラブル'],
-            始末書: ['始末書', '反省文', 'ペナルティ'],
-            健康: ['健康', '検診', 'インフルエンザ', '事故', '運転'],
-            天風: ['中村天風', '天風', '金言', '至言', '積極的', '怒らず', '恐れず'],
-        };
-
-        let searchWords = [question.slice(0, 10)];
-        for (const [cat, words] of Object.entries(keywords)) {
-            if (words.some(w => question.includes(w))) {
-                searchWords = words;
-                break;
-            }
-        }
-
         const lines = docText.split('\n');
         let relevantLines = [];
         let capturing = false;
         let captureCount = 0;
 
+        // 質問の単語を1文字ずつ分解してマッチング
+        const qWords = question.replace(/[、。？！\s]/g, ' ').split(' ').filter(w => w.length >= 2);
+
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
-            const matches = searchWords.some(w => line.includes(w));
+            const matches = qWords.some(w => line.includes(w));
 
             if (matches) {
                 capturing = true;
                 captureCount = 0;
-                if (i > 0) relevantLines.push(lines[i-1]);
+                if (i > 2) relevantLines.push(...lines.slice(Math.max(0, i-2), i));
             }
 
             if (capturing) {
                 relevantLines.push(line);
                 captureCount++;
-                if (captureCount > 60) capturing = false;
+                if (captureCount > 80) capturing = false;
             }
         }
 
-        const relevant = relevantLines.join('\n').trim();
-        return relevant.length > 100 ? relevant.slice(0, 3000) : docText.slice(0, 3000);
+        const relevant = [...new Set(relevantLines)].join('\n').trim();
+
+        // 関連部分が見つかれば使用、なければ全文の先頭3000文字
+        if (relevant.length > 100) {
+            return relevant.slice(0, 3000);
+        }
+        return docText.slice(0, 3000);
     }
 
     function setQ(text) {
