@@ -133,37 +133,38 @@
     function getRelevantChunk(question) {
         if (!docText) return '';
 
-        const lines = docText.split('\n');
-        let relevantLines = [];
-        let capturing = false;
-        let captureCount = 0;
-
-        // 質問の単語を1文字ずつ分解してマッチング
-        const qWords = question.replace(/[、。？！\s]/g, ' ').split(' ').filter(w => w.length >= 2);
-
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
-            const matches = qWords.some(w => line.includes(w));
-
-            if (matches) {
-                capturing = true;
-                captureCount = 0;
-                if (i > 2) relevantLines.push(...lines.slice(Math.max(0, i-2), i));
-            }
-
-            if (capturing) {
-                relevantLines.push(line);
-                captureCount++;
-                if (captureCount > 80) capturing = false;
-            }
+        // 質問から2文字以上の単語を抽出
+        const qWords = [];
+        for (let i = 0; i < question.length - 1; i++) {
+            qWords.push(question.slice(i, i + 2));
         }
 
-        const relevant = [...new Set(relevantLines)].join('\n').trim();
-
-        // 関連部分が見つかれば使用、なければ全文の先頭3000文字
-        if (relevant.length > 100) {
-            return relevant.slice(0, 3000);
+        // docTextを500文字ずつのチャンクに分割
+        const chunkSize = 500;
+        const overlap = 100;
+        const chunks = [];
+        for (let i = 0; i < docText.length; i += chunkSize - overlap) {
+            chunks.push(docText.slice(i, i + chunkSize));
         }
+
+        // 各チャンクのスコアを計算
+        const scored = chunks.map((chunk, idx) => {
+            const score = qWords.filter(w => chunk.includes(w)).length;
+            return { chunk, score, idx };
+        });
+
+        // スコアの高い順に並び替えて上位3チャンクを結合
+        const top = scored
+            .filter(s => s.score > 0)
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 3)
+            .sort((a, b) => a.idx - b.idx)
+            .map(s => s.chunk);
+
+        if (top.length > 0) {
+            return top.join('\n').slice(0, 3000);
+        }
+
         return docText.slice(0, 3000);
     }
 
