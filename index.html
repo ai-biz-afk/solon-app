@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="経営計画書">
     <title>経営計画書</title>
@@ -39,14 +39,12 @@
             <button class="update-btn" onclick="updateDoc()">🔄 更新</button>
         </div>
     </div>
-
     <div id="chatArea">
         <div class="empty-state">
             <div style="font-size:40px;margin-bottom:12px;">💬</div>
             <div>経営計画書を読み込んでいます...</div>
         </div>
     </div>
-
     <div class="tmpl-row">
         <button class="tmpl-btn" onclick="setQ('手当や給与について知りたい')">手当</button>
         <button class="tmpl-btn" onclick="setQ('採用や人材育成について教えてください')">採用・人材</button>
@@ -55,31 +53,25 @@
         <button class="tmpl-btn" onclick="setQ('賞与の基準について知りたい')">賞与</button>
         <button class="tmpl-btn" onclick="setQ('経営方針について知りたい')">経営方針</button>
     </div>
-
     <div class="input-row">
         <textarea id="situation" placeholder="質問を入力..."
             oninput="this.style.height='44px';this.style.height=Math.min(this.scrollHeight,120)+'px'"
             onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();send();}"></textarea>
         <button id="sendBtn" onclick="send()">&#10148;</button>
     </div>
-
     <div class="reset-row">
         <button class="reset-btn" onclick="resetChat()">会話をリセット</button>
     </div>
 </div>
-
 <script>
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbzU2GU6Zdhj8wQKibVoqz8Q64Mh_xptJDLdAY5fjwlw5v1xC5RHKf5mhG4yISX6hkXC/exec';
     const STORAGE_KEY = 'solon_doc_text';
     const STORAGE_DATE_KEY = 'solon_doc_date';
-
     let docText = '';
     let conv = [];
     let msgs = [];
     const area = document.getElementById('chatArea');
-
     function getApiKey() { return localStorage.getItem('solon_api_key') || ''; }
-
     // GAS経由でGoogle Docsを読み込む
     async function fetchDoc() {
         const res = await fetch(GAS_URL);
@@ -89,12 +81,10 @@
         }
         throw new Error('データ取得失敗');
     }
-
     // 初回または更新ボタン押下時に読み込む
     async function loadDoc(forceUpdate = false) {
         const saved = localStorage.getItem(STORAGE_KEY);
         const savedDate = localStorage.getItem(STORAGE_DATE_KEY);
-
         // 保存済みデータがあれば即座に使用
         if (saved && saved.length > 200 && !forceUpdate) {
             docText = saved;
@@ -103,7 +93,6 @@
             renderMsgs();
             return;
         }
-
         // GASから取得
         document.getElementById('docStatus').textContent = '📄 最新データを取得中...';
         try {
@@ -123,22 +112,18 @@
             }
         }
     }
-
     // 更新ボタン
     async function updateDoc() {
         await loadDoc(true);
     }
-
     // 質問に関連する部分だけを抽出
     function getRelevantChunk(question) {
         if (!docText) return '';
-
         // 質問から2文字以上の単語を抽出
         const qWords = [];
         for (let i = 0; i < question.length - 1; i++) {
             qWords.push(question.slice(i, i + 2));
         }
-
         // docTextを500文字ずつのチャンクに分割
         const chunkSize = 500;
         const overlap = 100;
@@ -146,13 +131,11 @@
         for (let i = 0; i < docText.length; i += chunkSize - overlap) {
             chunks.push(docText.slice(i, i + chunkSize));
         }
-
         // 各チャンクのスコアを計算
         const scored = chunks.map((chunk, idx) => {
             const score = qWords.filter(w => chunk.includes(w)).length;
             return { chunk, score, idx };
         });
-
         // スコアの高い順に並び替えて上位3チャンクを結合
         const top = scored
             .filter(s => s.score > 0)
@@ -160,19 +143,15 @@
             .slice(0, 3)
             .sort((a, b) => a.idx - b.idx)
             .map(s => s.chunk);
-
         if (top.length > 0) {
             return top.join('\n').slice(0, 3000);
         }
-
         return docText.slice(0, 3000);
     }
-
     function setQ(text) {
         document.getElementById('situation').value = text;
         document.getElementById('situation').focus();
     }
-
     function renderMsgs() {
         if (!msgs.length) {
             area.innerHTML = '<div class="empty-state"><div style="font-size:40px;margin-bottom:12px;">💬</div><div>下の入力欄から質問してください</div></div>';
@@ -184,14 +163,11 @@
             return `<div style="text-align:center;color:#EF4444;font-size:12px;margin:8px 0;">${esc(m.text)}</div>`;
         }).join('');
     }
-
     async function send() {
         if (!docText) { alert('経営計画書の読み込みが完了していません。'); return; }
-
         const el = document.getElementById('situation');
         const q = el.value.trim();
         if (!q) return;
-
         let apiKey = getApiKey();
         if (!apiKey) {
             const key = prompt('初回設定：APIキーを入力してください\n（sk-ant- で始まる文字列）');
@@ -199,24 +175,18 @@
             localStorage.setItem('solon_api_key', key);
             apiKey = key;
         }
-
         el.value = '';
         el.style.height = '44px';
-
         msgs.push({ role: 'user', text: q });
         conv.push({ role: 'user', content: q });
         renderMsgs();
-
         setTimeout(() => { area.scrollTop = area.scrollHeight; }, 30);
-
         const btn = document.getElementById('sendBtn');
         btn.disabled = true;
         btn.innerHTML = '⏳';
-
         try {
             const chunk = getRelevantChunk(q);
             const recentConv = conv.slice(-6);
-
             const res = await fetch('https://api.anthropic.com/v1/messages', {
                 method: 'POST',
                 headers: {
@@ -226,7 +196,7 @@
                     'anthropic-dangerous-direct-browser-access': 'true'
                 },
                 body: JSON.stringify({
-                    model: 'claude-sonnet-4-20250514',
+                    model: 'claude-sonnet-4-6',
                     max_tokens: 800,
                     system: `あなたは株式会社ソロンの社長・平川浩美です。以下の経営計画書に基づいて、社員の質問に正確に答えてください。
 回答のルール：
@@ -236,21 +206,27 @@
 ・箇条書きは「・」を使う
 ・文末に「：」は使わない
 ・詳細を聞かれたら追加で答える
-
 【経営計画書】
 ${chunk}`,
                     messages: recentConv
                 })
             });
-
-            if (!res.ok) { const e = await res.json(); throw new Error(e.error?.message || 'エラー'); }
+            if (!res.ok) {
+                let errMsg = 'エラー';
+                try { const e = await res.json(); errMsg = e.error?.message || errMsg; } catch(_) {}
+                if (res.status === 404) {
+                    errMsg = 'AIモデルが見つかりません（404）。APIキーまたはモデル名をご確認ください。';
+                } else if (res.status === 401) {
+                    errMsg = 'APIキーが正しくありません（401）。';
+                    localStorage.removeItem('solon_api_key');
+                }
+                throw new Error(errMsg);
+            }
             const data = await res.json();
             const answer = data.content[0].text;
-
             conv.push({ role: 'assistant', content: answer });
             msgs.push({ role: 'assistant', text: answer });
             renderMsgs();
-
         } catch(e) {
             msgs.push({ role: 'error', text: 'エラー: ' + e.message });
             renderMsgs();
@@ -259,13 +235,10 @@ ${chunk}`,
             btn.innerHTML = '&#10148;';
         }
     }
-
     function resetChat() {
         if (confirm('会話をリセットしますか？')) { conv = []; msgs = []; renderMsgs(); }
     }
-
     function esc(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
-
     function fmt(t) {
         return esc(t)
             .replace(/#{1,6}\s?/g, '')
@@ -276,7 +249,6 @@ ${chunk}`,
             .replace(/：$/g, '')
             .replace(/\n/g, '<br>');
     }
-
     loadDoc();
 </script>
 </body>
